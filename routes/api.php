@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\API\BankAccountApiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\OtpController;
 use App\Http\Controllers\API\AuthController;
@@ -80,4 +81,10 @@ Route::get('/get-grains', [FilterApiController::class, 'getGrains']);
 Route::get('/get-filtered-products', [FilterApiController::class, 'getFilteredProducts']);
 
 
+Route::post('/link-account', [BankAccountApiController::class, 'linkAccount']);
+Route::get('/transactions/{accountId}', [BankAccountApiController::class, 'getTransactions']);
+
 require __DIR__.'/mamon.php';
+
+
+

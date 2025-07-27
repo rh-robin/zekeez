@@ -158,7 +158,7 @@ class StorePropertyRequest extends FormRequest
             'unit.unit_kitchen_facilities.extractor_hood' => 'nullable|boolean',
             'unit.unit_kitchen_facilities.microwave' => 'nullable|boolean',
             'unit.unit_kitchen_facilities.dishwasher' => 'nullable|boolean',
-            'unit.unit_kitchen_facilities.washing_machine' => 'nullable|integer|min:0',
+            'unit.unit_kitchen_facilities.washing_machine' => 'nullable|boolean',
             'unit.unit_kitchen_facilities.dryer' => 'nullable|boolean',
             'unit.unit_kitchen_facilities.small_household_appliances' => 'nullable|boolean',
             'unit.unit_kitchen_facilities.small_household_appliances_details' => 'nullable|string|max:255',
