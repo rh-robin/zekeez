@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('leases', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tenant_id')->nullable();
-            $table->unsignedBigInteger('property_id');
-            $table->string('property_type')->nullable();
+            $table->morphs('property');
             $table->string('guarantor');
             $table->timestamps();
+
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
     }
 

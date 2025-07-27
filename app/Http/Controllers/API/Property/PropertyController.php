@@ -199,6 +199,7 @@ class PropertyController extends Controller
                     'property_name' => $building->building_name,
                     'building_id' => $building->building_id,
                     'unit_id' => null,
+                    'property_type' => 'building', // Added property_type for buildings
                 ];
             });
 
@@ -221,6 +222,7 @@ class PropertyController extends Controller
                     'property_name' => $propertyName,
                     'building_id' => $unit->building_id,
                     'unit_id' => $unit->unit_id,
+                    'property_type' => 'unit', // Added property_type for units
                 ];
             });
 
