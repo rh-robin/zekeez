@@ -15,6 +15,7 @@ use App\Http\Controllers\API\SubscriptionApiController;
 use App\Http\Controllers\API\Property\LeaseApiController;
 
 
+
 Route::post('/social-login', [SocialLoginController::class, 'SocialLogin']);
 Route::post('/register', [AuthController::class, 'userStore']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -84,7 +85,9 @@ Route::get('/get-filtered-products', [FilterApiController::class, 'getFilteredPr
 Route::post('/link-account', [BankAccountApiController::class, 'linkAccount']);
 Route::get('/transactions/{accountId}', [BankAccountApiController::class, 'getTransactions']);
 
+
 require __DIR__.'/mamon.php';
+require __DIR__.'/omayer.php';
 
 
 

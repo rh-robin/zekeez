@@ -11,28 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenants', function (Blueprint $table) {
+        Schema::create('tenant_bank_details', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id')->nullable();
-            $table->enum('type', ['individual', 'legal_entity']);
-            $table->morphs('property');
+            $table->unsignedBigInteger('tenant_id');
             $table->string('salutation')->nullable();
-            $table->string('company_name')->nullable();
-            $table->string('last_name');
+            $table->string('name');
             $table->string('first_name');
-            $table->string('email');
-            $table->string('phone');
-            $table->date('date_of_birth');
+            $table->string('quality');
+            $table->string('date_of_birth');
             $table->string('place_of_birth');
             $table->text('address')->nullable();
-            $table->text('atitional_address')->nullable();
+            $table->text('additional_address')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('city');
             $table->string('country');
-            $table->string('owner_siret_siren_number')->nullable();
-            $table->string('website')->nullable();
-            $table->text('notes')->nullable();
+            $table->string('phone');
             $table->timestamps();
+            
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
     }
 
@@ -41,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenants');
+        Schema::dropIfExists('tenant_bank_details');
     }
 };

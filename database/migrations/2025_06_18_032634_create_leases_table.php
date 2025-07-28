@@ -15,10 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('tenant_id')->nullable();
             $table->morphs('property');
-            $table->string('guarantor');
+            $table->string('guarantor')->nullable();
             $table->timestamps();
-
-            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
     }
 

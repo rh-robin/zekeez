@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('date_of_return_of_the_security_deposit')->nullable();
             $table->timestamps();
             
+            $table->foreign('lease_id')->references('id')->on('leases')->onDelete('cascade');
         });
     }
 

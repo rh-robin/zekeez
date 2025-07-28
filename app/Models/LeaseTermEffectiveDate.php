@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaseTermEffectiveDate extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
+        'lease_id',
         'lease_type',
         'furnished_lease_term_type',
         'furnished_lease_duration',
@@ -16,14 +20,20 @@ class LeaseTermEffectiveDate extends Model
         'commercial_lease_duration',
         'professional_lease_term_type',
         'professional_lease_duration',
+        'other_lease_term_type',
         'lease_signing_date',
         'lease_effective_date',
-        'lease_renewal_extension_conditions',
-        'lease_removal_conditions',
+        'lease_renewal_conditions_type',
+        'other_lease_renewal_conditions',
     ];
 
     protected $casts = [
         'lease_signing_date' => 'date',
         'lease_effective_date' => 'date',
     ];
+
+    public function lease()
+    {
+        return $this->belongsTo(Lease::class);
+    }
 }
