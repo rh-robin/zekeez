@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('lease_financial_rent_conditions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
             $table->decimal('rent_amount', 10, 2)->nullable();
             $table->date('rent_payment_due_date')->nullable();
             $table->string('rent_payment_frequency')->nullable();

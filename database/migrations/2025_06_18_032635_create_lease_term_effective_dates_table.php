@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('lease_term_effective_dates', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
 
            // Lease Type Field
-            $table->string('lease_type');
+            $table->string('lease_type')->nullable();
             // Lease Term Type and Duration (Furnished Lease)
             $table->string('furnished_lease_term_type')->nullable();
             $table->integer('furnished_lease_duration')->nullable();
@@ -36,8 +36,8 @@ return new class extends Migration
             $table->string('other_lease_term_type')->nullable();
 
             // Dates
-            $table->date('lease_signing_date');
-            $table->date('lease_effective_date');
+            $table->date('lease_signing_date')->nullable();
+            $table->date('lease_effective_date')->nullable();
 
             // Conditions
             $table->text('lease_renewal_conditions_type')->nullable();

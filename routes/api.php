@@ -12,7 +12,7 @@ use App\Http\Controllers\API\ContactApiController;
 use App\Http\Controllers\API\ProductApiController;
 use App\Http\Controllers\API\SocialLoginController;
 use App\Http\Controllers\API\SubscriptionApiController;
-use App\Http\Controllers\API\Property\LeaseApiController;
+// use App\Http\Controllers\API\Property\LeaseApiController;
 
 
 

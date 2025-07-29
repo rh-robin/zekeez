@@ -3,16 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'lease_id',
         'type',
         'property_id',
+        'entity_id',
         'property_type',
         'salutation',
         'company_name',
@@ -37,6 +35,10 @@ class Tenant extends Model
         'type' => 'string',
     ];
 
+    public function entities()
+    {
+        return $this->hasMany(Entity::class);
+    }
     public function lease()
     {
         return $this->belongsTo(Lease::class);

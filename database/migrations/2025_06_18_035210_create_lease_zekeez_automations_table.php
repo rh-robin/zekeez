@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('lease_zekeez_automations', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
             // Rent Generation and Balance
             $table->date('generate_rents_from')->nullable();
             $table->boolean('has_tenant_balance')->nullable();
@@ -22,14 +22,14 @@ return new class extends Migration
             $table->boolean('automatic_rent_revision')->default(false);
 
             // Automation Settings
-            $table->boolean('automatic_rent_receipt_sending')->default(false);
-            $table->boolean('automatic_rent_call_sending')->default(false);
+            $table->boolean('automatic_rent_receipt_sending')->nullable();
+            $table->boolean('automatic_rent_call_sending')->nullable();;
             $table->date('rent_call_sending_date')->nullable();
-            $table->boolean('automatic_first_reminder_unpaid_rent')->default(false);
+            $table->boolean('automatic_first_reminder_unpaid_rent')->nullable();;
             $table->date('first_unpaid_rent_reminder_sending_date')->nullable();
-            $table->boolean('automatic_second_reminder_unpaid_rent')->default(false);
+            $table->boolean('automatic_second_reminder_unpaid_rent')->nullable();;
             $table->date('second_unpaid_rent_reminder_sending_date')->nullable();
-            $table->boolean('automatic_third_reminder_unpaid_rent')->default(false);
+            $table->boolean('automatic_third_reminder_unpaid_rent')->nullable();;
             $table->date('third_unpaid_rent_reminder_sending_date')->nullable();
 
             $table->timestamps();

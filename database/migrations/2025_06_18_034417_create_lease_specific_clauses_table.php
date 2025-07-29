@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('lease_specific_clauses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
             $table->text('joint_several_liability_clause')->nullable();
             $table->text('termination_clause')->nullable();
             $table->text('termination_clause_grounds')->nullable();

@@ -3,20 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lease extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
-        'tenant_id',
+        'entity_id',
         'property_id',
         'property_type',
         'guarantor',
     ];
 
-    public function tenant()
+    public function entities()
+    {
+        return $this->hasMany(Entity::class);
+    }
+
+        public function tenant()
     {
         return $this->belongsTo(Tenant::class);
     }

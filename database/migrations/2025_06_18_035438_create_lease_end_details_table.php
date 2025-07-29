@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('lease_end_details', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
             $table->date('departure_date_of_the_tenant')->nullable();
             $table->decimal('deposit_to_be_returned', 10, 2)->nullable();
             $table->date('date_of_return_of_the_security_deposit')->nullable();

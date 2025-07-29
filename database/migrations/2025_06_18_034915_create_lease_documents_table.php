@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('lease_documents', function (Blueprint $table) {
             $table->id();
             // Foreign key to link with leases table (assuming a relationship)
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
             // Annex Document Fields
             $table->string('inventory_of_premises_annex')->nullable();
             $table->string('technical_diagnostics_ddt_annex')->nullable();

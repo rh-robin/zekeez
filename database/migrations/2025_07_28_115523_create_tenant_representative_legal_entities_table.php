@@ -13,19 +13,19 @@ return new class extends Migration
     {
         Schema::create('tenant_representative_legal_entities', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('tenant_id');
+            $table->unsignedBigInteger('tenant_id')->nullable();
             $table->string('salutation')->nullable();
-            $table->string('name');
-            $table->string('first_name');
-            $table->string('quality');
-            $table->string('date_of_birth');
-            $table->string('place_of_birth');
+            $table->string('name')->nullable();
+            $table->string('first_name')->nullable();
+            $table->string('quality')->nullable();
+            $table->string('date_of_birth')->nullable();
+            $table->string('place_of_birth')->nullable();
             $table->text('address')->nullable();
             $table->text('additional_address')->nullable();
             $table->string('postal_code')->nullable();
-            $table->string('city');
-            $table->string('country');
-            $table->string('phone');
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
+            $table->string('phone')->nullable();
             $table->timestamps();
             
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');

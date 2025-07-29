@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('lease_rent_revision_conditions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('lease_id')->nullable();
             
             // Rent Revision Clause Details
             $table->string('frequency_of_rent_revision')->nullable();

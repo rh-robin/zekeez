@@ -3,12 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaseFinancialServiceChargesCondition extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'lease_id',
         'type_of_service_charges',

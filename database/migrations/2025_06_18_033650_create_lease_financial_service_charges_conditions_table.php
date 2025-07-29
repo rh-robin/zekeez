@@ -16,20 +16,20 @@ return new class extends Migration
             $table->unsignedBigInteger('lease_id');
 
             // Service Charge Details
-            $table->string('type_of_service_charges');
-            $table->decimal('monthly_flat_rate_amount', 10, 2);
+            $table->string('type_of_service_charges')->nullable();
+            $table->decimal('monthly_flat_rate_amount', 10, 2)->nullable();
             $table->string('fixed_charges_included')->nullable();
-            $table->decimal('monthly_provision_actual_charges', 10, 2);
+            $table->decimal('monthly_provision_actual_charges', 10, 2)->nullable();
             $table->text('types_of_actual_charges')->nullable();
             $table->text('procedures_regularization_actual_charges')->nullable();
             $table->text('distribution_charges_co_tenants')->nullable();
 
             // Specific Charges and Taxes Allocations
-            $table->string('property_tax_allocation');
+            $table->string('property_tax_allocation')->nullable();
             $table->string('property_tax_allocation_other')->nullable();
-            $table->string('co_ownership_charges_allocation');
+            $table->string('co_ownership_charges_allocation')->nullable();
             $table->string('co_ownership_charges_allocation_other')->nullable();
-            $table->string('insurance_allocation');
+            $table->string('insurance_allocation')->nullable();
             $table->string('insurance_allocation_other')->nullable();
             $table->string('maintenance_repairs_allocation')->nullable();
             $table->string('maintenance_repairs_allocation_other')->nullable();

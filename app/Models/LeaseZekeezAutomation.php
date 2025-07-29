@@ -3,12 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaseZekeezAutomation extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'lease_id',
         'generate_rents_from',
