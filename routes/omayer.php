@@ -21,7 +21,7 @@ Route::prefix('lease-tenants')->group(function () {
     Route::get('/{id}/{type?}', [LeaseTenantController::class, 'show'])->name('lease-tenants.show');
     
     // Update a specific lease or tenant
-    Route::put('/{id}/{type?}', [LeaseTenantController::class, 'update'])->name('lease-tenants.update');
+    Route::post('/{id}/{type?}', [LeaseTenantController::class, 'update'])->name('lease-tenants.update');
     
     // Delete a specific lease or tenant
     Route::delete('/{id}/{type?}', [LeaseTenantController::class, 'destroy'])->name('lease-tenants.destroy');
