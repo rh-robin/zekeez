@@ -4,71 +4,86 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\Requisition;
 use App\Trait\ResponseTrait;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BankAccountApiController extends Controller
 {
     use ResponseTrait;
+
+    public function createRequisition(Request $request)
+    {
+        $client = new Client();
+        $baseUrl = 'https://bankaccountdata.gocardless.com/api/v2';
+        $accessToken = $this->getAccessToken();
+
+        try {
+            $agreementId = $this->createEUA();
+            $response = $client->post("{$baseUrl}/requisitions/", [
+                'headers' => ['Authorization' => 'Bearer ' . $accessToken, 'Accept' => 'application/json', 'Content-Type' => 'application/json'],
+                'json' => [
+                    'institution_id' => $this->getInstitutionId(),
+                    'redirect' => env('APP_URL') . '/account-linked',
+                    'reference' => 'req_' . uniqid(),
+                    'agreement' => $agreementId,
+                    'user_language' => 'EN'
+                ]
+            ]);
+            $requisition = json_decode($response->getBody()->getContents(), true);
+            $requisitionId = $requisition['id'];
+            $reference = $requisition['reference'];
+
+            // Store the mapping
+            Requisition::create([
+                'requisition_id' => $requisitionId,
+                'reference' => $reference,
+                'entity_id' => $request->input('entity_id')
+            ]);
+
+            return $this->sendResponse(['link' => $requisition['link'], 'requisition_id' => $requisitionId], 'Requisition created');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to create requisition', ['error' => $e->getMessage()], 500);
+        }
+    }
 
     public function linkAccount(Request $request)
     {
         $client = new Client();
         $baseUrl = 'https://bankaccountdata.gocardless.com/api/v2';
         $accessToken = $this->getAccessToken();
+        $reference = $request->reference;
 
-        // Step 1: Create a requisition (using sandbox)
         try {
-            $response = $client->post("{$baseUrl}/requisitions/", [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json'
-                ],
-                'json' => [
-                    'institution_id' => $this->getInstitutionId(),
-                    'redirect' => env('APP_URL') . '/account-linked'
-                ]
-            ]);
+            // Find the requisition_id using the reference
+            $requisition = Requisition::where('reference', $reference)->firstOrFail();
+            $requisitionId = $requisition->requisition_id;
 
-            $requisition = json_decode($response->getBody()->getContents(), true);
-            $requisitionId = $requisition['id'];
-        } catch (\Exception $e) {
-            return $this->sendError('Failed to create requisition', ['error' => $e->getMessage()], 500);
-        }
-
-        // Step 2: Fetch account details (simulate auth in sandbox)
-        try {
             $accountResponse = $client->get("{$baseUrl}/requisitions/{$requisitionId}/", [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json'
-                ]
+                'headers' => ['Authorization' => 'Bearer ' . $accessToken, 'Accept' => 'application/json']
             ]);
-
             $accountData = json_decode($accountResponse->getBody()->getContents(), true);
-            $accountId = $accountData['accounts'][0]['account_id'] ?? null;
+            $accountIds = $accountData['accounts'] ?? [];
+
+            if (empty($accountIds)) {
+                return $this->sendError('No accounts linked', ['error' => 'Accounts not found in requisition'], 400);
+            }
+
+            foreach ($accountIds as $accountId) {
+                Account::create([
+                    'account_id' => $accountId,
+                    'entity_id' => $requisition->entity_id,
+                    'access_token' => $accessToken,
+                    'token_expires_at' => now()->addDay()
+                ]);
+            }
+
+            return $this->sendResponse(['account_ids' => $accountIds], 'Accounts linked');
         } catch (\Exception $e) {
-            return $this->sendError('Failed to fetch account details', ['error' => $e->getMessage()], 500);
+            return $this->sendError('Failed to link accounts', ['error' => $e->getMessage()], 500);
         }
-
-        if (!$accountId) {
-            return $this->sendError('No account linked', [], 400);
-        }
-
-        // Step 3: Store the account
-        try {
-            Account::create([
-                'account_id' => $accountId,
-                'entity_id' => $request->input('entity_id'),
-                'access_token' => $accessToken,
-                'token_expires_at' => now()->addDay()
-            ]);
-        } catch (\Exception $e) {
-            return $this->sendError('Failed to store account', ['error' => $e->getMessage()], 500);
-        }
-
-        return $this->sendResponse(['account_id' => $accountId], 'Account linked');
     }
 
     public function getTransactions($accountId)
@@ -102,15 +117,62 @@ class BankAccountApiController extends Controller
         }
     }
 
-    protected function getAccessToken()
+    /*protected function getAccessToken()
     {
         // Use the access token created in the sandbox dashboard
-        return env('GOCARDLESS_ACCESS_TOKEN', 'your_sandbox_access_token');
+        return env('GOCARDLESS_ACCESS_TOKEN');
+    }*/
+
+
+    protected function getAccessToken()
+    {
+        $client = new Client();
+        try {
+            $response = $client->post('https://bankaccountdata.gocardless.com/api/v2/token/new/', [
+                'json' => [
+                    'secret_id' => "426f2dff-c98e-4940-9cd7-b0338c294de0",
+                    'secret_key' => "ae3a880361fd9d1cd963b1aca4defe76101d55ea6522cde387fcdaefab1b133e183fcc9db7f3df827f068f7e40ffff1a7c5cea2b0e9f54401036b85ca3fb49ac"
+                ]
+            ]);
+            $tokenData = json_decode($response->getBody()->getContents(), true);
+            return $tokenData['access'];
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to generate access token: ' . $e->getMessage());
+        }
     }
 
     protected function getInstitutionId()
     {
         // Use sandbox for now
         return 'SANDBOXFINANCE_SFIN0000';
+    }
+
+
+    protected function createEUA()
+    {
+        $client = new Client();
+        $accessToken = $this->getAccessToken();
+        $baseUrl = 'https://bankaccountdata.gocardless.com/api/v2';
+
+        try {
+            $response = $client->post("{$baseUrl}/agreements/enduser/", [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => [
+                    'institution_id' => $this->getInstitutionId(),
+                    'max_historical_days' => 90,
+                    'access_valid_for_days' => 90,
+                    'access_scope' => ['balances', 'details', 'transactions']
+                ]
+            ]);
+
+            $euaData = json_decode($response->getBody()->getContents(), true);
+            return $euaData['id'];
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to create EUA: ' . $e->getMessage());
+        }
     }
 }

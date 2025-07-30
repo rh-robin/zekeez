@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('account_id')->unique();
             $table->string('entity_id')->nullable(); // Link to your entities
-            $table->string('access_token');
+            $table->text('access_token');
             $table->timestamp('token_expires_at');
             $table->timestamps();
         });
