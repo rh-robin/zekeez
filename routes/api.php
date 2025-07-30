@@ -82,6 +82,7 @@ Route::get('/get-grains', [FilterApiController::class, 'getGrains']);
 Route::get('/get-filtered-products', [FilterApiController::class, 'getFilteredProducts']);
 
 
+Route::post('/create-requisition', [BankAccountApiController::class, 'createRequisition']);
 Route::post('/link-account', [BankAccountApiController::class, 'linkAccount']);
 Route::get('/transactions/{accountId}', [BankAccountApiController::class, 'getTransactions']);
 

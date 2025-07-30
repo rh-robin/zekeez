@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('accounts', function (Blueprint $table) {
+        Schema::create('requisitions', function (Blueprint $table) {
             $table->id();
-            $table->string('account_id')->unique();
-            $table->string('entity_id')->nullable(); // Link to your entities
-            $table->text('access_token');
-            $table->timestamp('token_expires_at');
+            $table->string('requisition_id')->unique();
+            $table->string('reference')->unique();
+            $table->string('entity_id')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('accounts');
+        Schema::dropIfExists('requisitions');
     }
 };
