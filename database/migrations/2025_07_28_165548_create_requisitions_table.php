@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenants', function (Blueprint $table) {
+        Schema::create('requisitions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id')->nullable();
-            $table->enum('type', ['individual', 'legal_entity']);
-            $table->string('category');
-            $table->text('additional_info')->nullable();
+            $table->string('requisition_id')->unique();
+            $table->string('reference')->unique();
+            $table->string('entity_id')->nullable();
             $table->timestamps();
-
-
         });
     }
 
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenants');
+        Schema::dropIfExists('requisitions');
     }
 };
