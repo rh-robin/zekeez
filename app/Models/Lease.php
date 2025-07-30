@@ -2,32 +2,50 @@
 
 namespace App\Models;
 
-use App\Models\LeaseDocument;
-use App\Models\LeaseTermEffectiveDate;
 use Illuminate\Database\Eloquent\Model;
 
 class Lease extends Model
 {
     protected $fillable = [
-        'tenant_id',
+        'entity_id',
         'property_id',
         'property_type',
         'guarantor',
     ];
 
-    public function leaseEndDetails()
+    public function entities()
     {
-        return $this->hasOne(LeaseEndDetail::class);
+        return $this->hasMany(Entity::class);
     }
 
-    public function rentAutomationSettings()
+        public function tenant()
     {
-        return $this->hasOne(RentAutomationSetting::class);
+        return $this->belongsTo(Tenant::class);
     }
 
-    public function leaseDocuments()
+    public function property()
     {
-        return $this->hasOne(LeaseDocument::class);
+        return $this->morphTo();
+    }
+
+    public function leaseTermEffectiveDates()
+    {
+        return $this->hasOne(LeaseTermEffectiveDate::class);
+    }
+
+    public function leaseFinancialRentConditions()
+    {
+        return $this->hasOne(LeaseFinancialRentCondition::class);
+    }
+
+    public function leaseFinancialServiceChargesConditions()
+    {
+        return $this->hasOne(LeaseFinancialServiceChargesCondition::class);
+    }
+
+    public function leaseRentRevisionConditions()
+    {
+        return $this->hasOne(LeaseRentRevisionCondition::class);
     }
 
     public function leaseSpecificClauses()
@@ -35,23 +53,18 @@ class Lease extends Model
         return $this->hasOne(LeaseSpecificClause::class);
     }
 
-    public function rentRevisionConditions()
+    public function leaseDocuments()
     {
-        return $this->hasOne(RentRevisionCondition::class);
+        return $this->hasOne(LeaseDocument::class);
     }
 
-    public function serviceChargeConditions()
+    public function leaseZekeezAutomations()
     {
-        return $this->hasOne(ServiceChargeCondition::class);
+        return $this->hasOne(LeaseZekeezAutomation::class);
     }
 
-    public function leaseFinancialConditions()
+    public function leaseEndDetails()
     {
-        return $this->hasOne(LeaseFinancialCondition::class);
-    }
-
-    public function leaseTermEffectiveDates()
-    {
-        return $this->hasOne(LeaseTermEffectiveDate::class);
+        return $this->hasOne(LeaseEndDetail::class);
     }
 }

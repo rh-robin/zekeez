@@ -13,15 +13,20 @@ return new class extends Migration
     {
         Schema::create('lease_specific_clauses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id');
-            $table->text('grounds_for_termination_clause')->nullable();
-            $table->string('type_of_use_of_leased_property')->nullable();
-            $table->decimal('key_money_amount', 10, 2)->nullable();
-            $table->string('legal_qualification_key_money')->nullable();
-            $table->decimal('value_of_lease_right', 10, 2)->nullable();
-            $table->text('conditions_for_assignment_of_lease_right')->nullable();
+            $table->unsignedBigInteger('lease_id')->nullable();
+            $table->text('joint_several_liability_clause')->nullable();
+            $table->text('termination_clause')->nullable();
+            $table->text('termination_clause_grounds')->nullable();
+            $table->text('destination_clause_type_of_use')->nullable();
+            $table->decimal('key_money_right_to_lease',10,2)->nullable();
+            $table->decimal('key_money_amount',10,2)->nullable();
+            $table->decimal('key_money_legal_qualification', 10, 2)->nullable();
+            $table->text('right_to_lease_existence')->nullable();
+            $table->text('right_to_lease_conditions_assignment')->nullable();
+            $table->text('right_to_lease_value')->nullable();
             $table->timestamps();
 
+            $table->foreign('lease_id')->references('id')->on('leases')->onDelete('cascade');
         });
     }
 

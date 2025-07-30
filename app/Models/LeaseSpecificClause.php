@@ -8,20 +8,18 @@ class LeaseSpecificClause extends Model
 {
     protected $fillable = [
         'lease_id',
-        'grounds_for_termination_clause',
-        'type_of_use_of_leased_property',
+        'joint_several_liability_clause',
+        'termination_clause',
+        'termination_clause_grounds',
+        'destination_clause_type_of_use',
+        'key_money_right_to_lease',
         'key_money_amount',
-        'legal_qualification_key_money',
-        'value_of_lease_right',
-        'conditions_for_assignment_of_lease_right',
+        'key_money_legal_qualification',
+        'right_to_lease_existence',
+        'right_to_lease_conditions_assignment',
+        'right_to_lease_value',
     ];
 
-    protected $casts = [
-        'key_money_amount' => 'decimal:2',
-        'value_of_lease_right' => 'decimal:2',
-    ];
-
-    // Relationship with Lease model
     public function lease()
     {
         return $this->belongsTo(Lease::class);

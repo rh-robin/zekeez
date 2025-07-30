@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('leases', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('property_id')->nullable();
             $table->unsignedBigInteger('tenant_id')->nullable();
-            $table->morphs('property');
-            $table->string('guarantor');
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('property_type')->nullable();
+            $table->string('guarantor')->nullable();
             $table->timestamps();
-
-            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
     }
 
