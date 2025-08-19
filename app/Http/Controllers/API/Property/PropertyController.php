@@ -251,6 +251,63 @@ class PropertyController extends Controller
 
 
 
+    public function getPropertiesByEntityForTable($entityId)
+    {
+        // Check if the user is authenticated via the 'api' guard
+        if (!auth('api')->check()) {
+            return $this->sendError('Please login first', [], 422);
+        }
+
+        $user = auth('api')->user();
+
+        // Verify the entity belongs to the authenticated user
+        $entity = Entity::where('user_id', $user->id)->where('id', $entityId)->first();
+
+        if (!$entity) {
+            return $this->sendError('Entity not found or not accessible by this user.', [], 404);
+        }
+
+        // Get all buildings for the entity with their units
+        $buildings = $entity->buildings()->with('units')->get();
+
+        // Get standalone units (those with no building_id) for the entity
+        $standaloneUnits = $entity->units()->whereNull('building_id')->get();
+
+        // Combine into properties array
+        $properties = collect();
+
+        // Add buildings with their units
+        foreach ($buildings as $building) {
+            $properties->push([
+                'id' => $building->id,
+                'name' => $building->name ?? "Building {$building->id}",
+                'property_type' => 'building',
+                'units' => $building->units->map(function ($unit) {
+                    return [
+                        'id' => $unit->id,
+                        'name' => $unit->name ?? "Unit {$unit->id}",
+                        'property_type' => 'unit',
+                    ];
+                })->all(),
+            ]);
+        }
+
+        // Add standalone units
+        foreach ($standaloneUnits as $unit) {
+            $properties->push([
+                'id' => $unit->id,
+                'name' => $unit->name ?? "Unit {$unit->id}",
+                'property_type' => 'unit',
+                'units' => [],
+            ]);
+        }
+
+        $message = 'Properties retrieved successfully.';
+        return $this->sendResponse($properties->all(), $message);
+    }
+
+
+
 
 
 }
