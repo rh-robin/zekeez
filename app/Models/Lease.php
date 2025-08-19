@@ -6,26 +6,37 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lease extends Model
 {
-    protected $fillable = [
-        'entity_id',
-        'property_id',
-        'property_type',
-        'guarantor',
-    ];
+    protected $fillable = ['entity_id', 'contact_id'];
 
-    public function entities()
+    public function entity()
     {
-        return $this->hasMany(Entity::class);
+        return $this->belongsTo(Entity::class);
     }
 
-        public function tenant()
+    public function contact()
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Contact::class);
     }
 
-    public function property()
+    public function tenants()
     {
-        return $this->morphTo();
+        return $this->belongsToMany(Tenant::class, 'lease_tenant');
+    }
+
+    public function buildings()
+    {
+        return $this->morphedByMany(Building::class, 'property', 'lease_property');
+    }
+
+    public function units()
+    {
+        return $this->morphedByMany(Unit::class, 'property', 'lease_property');
+    }
+
+
+    public function properties()
+    {
+        return collect([$this->buildings, $this->units])->flatten();
     }
 
     public function leaseTermEffectiveDates()

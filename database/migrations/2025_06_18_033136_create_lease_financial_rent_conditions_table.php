@@ -16,9 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger('lease_id')->nullable();
             $table->decimal('rent_amount', 10, 2)->nullable();
             $table->date('rent_payment_due_date')->nullable();
-            $table->string('rent_payment_frequency')->nullable();
-            $table->string('preferred_rent_payment_method')->nullable();
-            $table->string('other_accepted_payment_methods')->nullable();
+            $table->enum('rent_payment_frequency',['monthly','quarterly', 'annually'])->nullable();
+            $table->enum('preferred_rent_payment_method',['bank_transfer', 'check', 'cash', 'direct_debit'])->nullable();
+            $table->string('other_accepted_payment_method')->nullable();
             $table->timestamps();
 
             $table->foreign('lease_id')->references('id')->on('leases')->onDelete('cascade');

@@ -6,216 +6,136 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LeaseTenantStoreRequest;
 use App\Models\Lease;
 use App\Models\Tenant;
+use App\Trait\ResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class LeaseTenantController extends Controller
 {
-    public function index(): JsonResponse
-    {
-        $leases = Lease::with([
-            'tenant',
-            'property',
-            'leaseTermEffectiveDates',
-            'leaseFinancialRentConditions',
-            'leaseFinancialServiceChargesConditions',
-            'leaseRentRevisionConditions',
-            'leaseSpecificClauses',
-            'leaseDocuments',
-            'leaseZekeezAutomations',
-            'leaseEndDetails'
-        ])->get();
-
-        $tenants = Tenant::with(['lease', 'property', 'representativeLegalEntities', 'bankDetails'])->get();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Retrieved all leases and tenants',
-            'data' => [
-                'leases' => $leases,
-                'tenants' => $tenants
-            ]
-        ], 200);
-    }
+    use ResponseTrait;
 
     public function store(LeaseTenantStoreRequest $request): JsonResponse
     {
-        return DB::transaction(function () use ($request) {
-            $tenant = null;
-            $lease = null;
+        try {
+            return DB::transaction(function () use ($request) {
+                $leases = collect();
+                $tenants = collect();
 
-            // Create Lease (required)
-            if ($request->has('lease')) {
-                $leaseData = $request->input('lease');
-                $lease = Lease::create($leaseData);
-                $this->createOrUpdateRelatedLeaseRecords($lease, $leaseData);
-            }
-
-            // Create Tenant if provided (optional)
-            if ($request->has('tenant')) {
-                $tenantData = $request->input('tenant');
-                $tenantData['lease_id'] = $lease->id; // Link tenant to lease
-                $tenant = Tenant::create($tenantData);
-
-                // Create related representative legal entities
-                if (isset($tenantData['representative_legal_entities'])) {
-                    foreach ($tenantData['representative_legal_entities'] as $rep) {
-                        $tenant->representativeLegalEntities()->create($rep);
-                    }
+                // Handle existing leases
+                if ($request->has('existing_leases')) {
+                    $leases = Lease::whereIn('id', $request->input('existing_leases'))->get();
                 }
 
-                // Create related bank details
-                if (isset($tenantData['bank_details'])) {
-                    foreach ($tenantData['bank_details'] as $bankDetail) {
-                        $tenant->bankDetails()->create($bankDetail);
-                    }
-                }
-
-                // Update lease with tenant_id
-                $lease->tenant_id = $tenant->id;
-                $lease->save();
-            }
-
-            // Load relationships for response
-            if ($lease) {
-                $lease->load([
-                    'tenant',
-                    'property',
-                    'leaseTermEffectiveDates',
-                    'leaseFinancialRentConditions',
-                    'leaseFinancialServiceChargesConditions',
-                    'leaseRentRevisionConditions',
-                    'leaseSpecificClauses',
-                    'leaseDocuments',
-                    'leaseZekeezAutomations',
-                    'leaseEndDetails'
-                ]);
-            }
-            if ($tenant) {
-                $tenant->load(['lease', 'property', 'representativeLegalEntities', 'bankDetails']);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Lease and/or tenant created successfully',
-                'data' => [
-                    'lease' => $lease,
-                    'tenant' => $tenant
-                ]
-            ], 201);
-        });
-    }
-
-    public function show($id, $type = 'lease'): JsonResponse
-    {
-        $data = null;
-
-        if ($type === 'lease') {
-            $data = Lease::with([
-                'tenant',
-                'property',
-                'leaseTermEffectiveDates',
-                'leaseFinancialRentConditions',
-                'leaseFinancialServiceChargesConditions',
-                'leaseRentRevisionConditions',
-                'leaseSpecificClauses',
-                'leaseDocuments',
-                'leaseZekeezAutomations',
-                'leaseEndDetails'
-            ])->find($id);
-        } elseif ($type === 'tenant') {
-            $data = Tenant::with(['lease', 'property', 'representativeLegalEntities', 'bankDetails'])->find($id);
-        }
-
-        if (!$data) {
-            return response()->json([
-                'status' => 'error',
-                'message' => ucfirst($type) . ' not found',
-                'data' => null
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => ucfirst($type) . ' retrieved successfully',
-            'data' => [
-                $type => $data
-            ]
-        ], 200);
-    }
-
-    public function update(LeaseTenantStoreRequest $request, $id, $type = 'lease'): JsonResponse
-    {
-        return DB::transaction(function () use ($request, $id, $type) {
-            $lease = null;
-            $tenant = null;
-
-            if ($type === 'lease') {
-                $lease = Lease::findOrFail($id);
+                // Create new lease
                 if ($request->has('lease')) {
                     $leaseData = $request->input('lease');
-                    $lease->update($leaseData);
-                    $this->createOrUpdateRelatedLeaseRecords($lease, $leaseData);
-                }
+                    $lease = Lease::create([
+                        'entity_id' => $leaseData['entity_id'],
+                        'contact_id' => $leaseData['contact_id'] ?? null,
+                    ]);
 
-                if ($request->has('tenant')) {
-                    $tenantData = $request->input('tenant');
-                    $tenantData['lease_id'] = $lease->id;
-                    $tenant = Tenant::updateOrCreate(
-                        ['lease_id' => $lease->id],
-                        $tenantData
-                    );
-                    $lease->tenant_id = $tenant->id;
-                    $lease->save();
+                    // Create related lease records
+                    $this->createOrUpdateRelatedLeaseRecords($lease, $leaseData, $request);
 
-                    // Update tenant-related records
-                    if (isset($tenantData['representative_legal_entities'])) {
-                        $tenant->representativeLegalEntities()->delete();
-                        foreach ($tenantData['representative_legal_entities'] as $rep) {
-                            $tenant->representativeLegalEntities()->create($rep);
+                    // Attach properties
+                    if ($request->has('properties')) {
+                        foreach ($request->input('properties', []) as $property) {
+                            if ($property['type'] === 'App\Models\Building') {
+                                $lease->buildings()->attach($property['id'], ['property_type' => $property['type']]);
+                            } elseif ($property['type'] === 'App\Models\Unit') {
+                                $lease->units()->attach($property['id'], ['property_type' => $property['type']]);
+                            }
                         }
                     }
-                    if (isset($tenantData['bank_details'])) {
-                        $tenant->bankDetails()->delete();
-                        foreach ($tenantData['bank_details'] as $bankDetail) {
-                            $tenant->bankDetails()->create($bankDetail);
-                        }
-                    }
-                }
-            } elseif ($type === 'tenant') {
-                $tenant = Tenant::findOrFail($id);
-                if ($request->has('tenant')) {
-                    $tenantData = $request->input('tenant');
-                    $tenant->update($tenantData);
 
-                    // Update tenant-related records
-                    if (isset($tenantData['representative_legal_entities'])) {
-                        $tenant->representativeLegalEntities()->delete();
-                        foreach ($tenantData['representative_legal_entities'] as $rep) {
-                            $tenant->representativeLegalEntities()->create($rep);
-                        }
-                    }
-                    if (isset($tenantData['bank_details'])) {
-                        $tenant->bankDetails()->delete();
-                        foreach ($tenantData['bank_details'] as $bankDetail) {
-                            $tenant->bankDetails()->create($bankDetail);
-                        }
-                    }
+                    $leases->push($lease);
                 }
 
-                if ($request->has('lease') && $tenant->lease_id) {
-                    $leaseData = $request->input('lease');
-                    $lease = Lease::findOrFail($tenant->lease_id);
-                    $lease->update($leaseData);
-                    $this->createOrUpdateRelatedLeaseRecords($lease, $leaseData);
+                // Handle existing tenants
+                if ($request->has('existing_tenants')) {
+                    $tenants = Tenant::whereIn('id', $request->input('existing_tenants'))->get();
                 }
-            }
 
-            // Load relationships for response
-            if ($lease) {
-                $lease->load([
-                    'tenant',
-                    'property',
+                // Create new tenants
+                if ($request->has('tenants')) {
+                    foreach ($request->input('tenants', []) as $tenantData) {
+                        $tenant = Tenant::create(array_filter([
+                            'entity_id' => $tenantData['entity_id'],
+                            'type' => $tenantData['type'],
+                            'category' => $tenantData['category'] ?? null,
+                            'salutation' => $tenantData['salutation'] ?? null,
+                            'company_name' => $tenantData['company_name'] ?? null,
+                            'legal_status' => $tenantData['legal_status'] ?? null,
+                            'last_name' => $tenantData['last_name'],
+                            'first_name' => $tenantData['first_name'],
+                            'email' => $tenantData['email'],
+                            'phone' => $tenantData['phone'],
+                            'date_of_birth' => $tenantData['date_of_birth'],
+                            'place_of_birth' => $tenantData['place_of_birth'],
+                            'address' => $tenantData['address'] ?? null,
+                            'additional_address' => $tenantData['additional_address'] ?? null,
+                            'postal_code' => $tenantData['postal_code'] ?? null,
+                            'city' => $tenantData['city'],
+                            'country' => $tenantData['country'],
+                            'notes' => $tenantData['notes'] ?? null,
+                        ]));
+
+                        // Create related representative legal entities
+                        if (isset($tenantData['representative_legal_entities'])) {
+                            foreach ($tenantData['representative_legal_entities'] as $rep) {
+                                $tenant->representativeLegalEntities()->create(array_filter([
+                                    'salutation' => $rep['salutation'] ?? null,
+                                    'first_name' => $rep['first_name'],
+                                    'last_name' => $rep['last_name'],
+                                    'quality' => $rep['quality'],
+                                    'date_of_birth' => $rep['date_of_birth'],
+                                    'place_of_birth' => $rep['place_of_birth'],
+                                    'address' => $rep['address'] ?? null,
+                                    'additional_address' => $rep['additional_address'] ?? null,
+                                    'postal_code' => $rep['postal_code'] ?? null,
+                                    'city' => $rep['city'],
+                                    'country' => $rep['country'],
+                                    'email' => $rep['email'] ?? null,
+                                    'phone' => $rep['phone'],
+                                    'siret_siren_number' => $rep['siret_siren_number'] ?? null,
+                                    'website' => $rep['website'] ?? null,
+                                ]));
+                            }
+                        }
+
+                        // Create related bank details
+                        if (isset($tenantData['bank_details'])) {
+                            foreach ($tenantData['bank_details'] as $bankDetail) {
+                                $tenant->bankDetails()->create(array_filter([
+                                    'bank_name' => $bankDetail['bank_name'],
+                                    'rib_iban' => $bankDetail['rib_iban'],
+                                    'bic_swift' => $bankDetail['bic_swift'],
+                                    'address' => $bankDetail['address'] ?? null,
+                                    'additional_address' => $bankDetail['additional_address'] ?? null,
+                                    'postal_code' => $bankDetail['postal_code'] ?? null,
+                                    'city' => $bankDetail['city'],
+                                    'country' => $bankDetail['country'],
+                                ]));
+                            }
+                        }
+
+                        $tenants->push($tenant);
+                    }
+                }
+
+                // Attach tenants to leases
+                foreach ($leases as $lease) {
+                    foreach ($tenants as $tenant) {
+                        $lease->tenants()->syncWithoutDetaching([$tenant->id]);
+                    }
+                }
+
+                // Load relationships for response
+                $leases->each->load([
+                    'tenants',
+                    'buildings',
+                    'units',
                     'leaseTermEffectiveDates',
                     'leaseFinancialRentConditions',
                     'leaseFinancialServiceChargesConditions',
@@ -223,103 +143,101 @@ class LeaseTenantController extends Controller
                     'leaseSpecificClauses',
                     'leaseDocuments',
                     'leaseZekeezAutomations',
-                    'leaseEndDetails'
+                    'leaseEndDetails',
                 ]);
-            }
-            if ($tenant) {
-                $tenant->load(['lease', 'property', 'representativeLegalEntities', 'bankDetails']);
-            }
 
-            return response()->json([
-                'status' => 'success',
-                'message' => ucfirst($type) . ' updated successfully',
-                'data' => [
-                    'lease' => $lease,
-                    'tenant' => $tenant
-                ]
-            ], 200);
-        });
+                $tenants->each->load([
+                    'leases',
+                    'representativeLegalEntities',
+                    'bankDetails',
+                ]);
+
+                return $this->sendResponse(
+                    [
+                        'leases' => $leases,
+                        'tenants' => $tenants,
+                    ],
+                    'Lease(s) and/or tenant(s) processed successfully',
+                    null,
+                    201
+                );
+            });
+        } catch (\Exception $e) {
+            return $this->sendError(
+                'Failed to process lease/tenant',
+                ['error' => $e->getMessage()],
+                500
+            );
+        }
     }
 
-    public function destroy($id, $type = 'lease'): JsonResponse
-    {
-        $data = null;
-
-        if ($type === 'lease') {
-            $data = Lease::find($id);
-            if ($data && $data->tenant) {
-                $data->tenant()->delete(); // Delete associated tenant
-            }
-        } elseif ($type === 'tenant') {
-            $data = Tenant::find($id);
-        }
-
-        if (!$data) {
-            return response()->json([
-                'status' => 'error',
-                'message' => ucfirst($type) . ' not found',
-                'data' => null
-            ], 404);
-        }
-
-        $data->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => ucfirst($type) . ' deleted successfully',
-            'data' => null
-        ], 204);
-    }
-
-    private function createOrUpdateRelatedLeaseRecords($lease, $leaseData)
+    protected function createOrUpdateRelatedLeaseRecords(Lease $lease, array $leaseData, LeaseTenantStoreRequest $request): void
     {
         if (isset($leaseData['lease_term_effective_dates'])) {
-            $lease->leaseTermEffectiveDates()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_term_effective_dates']
-            );
+            $lease->leaseTermEffectiveDates()->create($leaseData['lease_term_effective_dates']);
         }
         if (isset($leaseData['lease_financial_rent_conditions'])) {
-            $lease->leaseFinancialRentConditions()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_financial_rent_conditions']
-            );
+            $lease->leaseFinancialRentConditions()->create($leaseData['lease_financial_rent_conditions']);
         }
         if (isset($leaseData['lease_financial_service_charges_conditions'])) {
-            $lease->leaseFinancialServiceChargesConditions()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_financial_service_charges_conditions']
-            );
+            $lease->leaseFinancialServiceChargesConditions()->create($leaseData['lease_financial_service_charges_conditions']);
         }
         if (isset($leaseData['lease_rent_revision_conditions'])) {
-            $lease->leaseRentRevisionConditions()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_rent_revision_conditions']
-            );
+            $lease->leaseRentRevisionConditions()->create($leaseData['lease_rent_revision_conditions']);
         }
         if (isset($leaseData['lease_specific_clauses'])) {
-            $lease->leaseSpecificClauses()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_specific_clauses']
-            );
+            $lease->leaseSpecificClauses()->create($leaseData['lease_specific_clauses']);
         }
         if (isset($leaseData['lease_documents'])) {
-            $lease->leaseDocuments()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_documents']
-            );
+            $documentPaths = [];
+
+            // Handle single file uploads
+            $singleFileFields = [
+                'inventory_of_premises_annex',
+                'technical_diagnostics_ddt_annex',
+                'inventory_of_furnishings_annex',
+                'co_ownership_regulations_annex',
+                'landlord_bank_details_annex',
+                'student_mobility_lease_justification_annex',
+            ];
+
+            foreach ($singleFileFields as $field) {
+                if ($request->hasFile("lease.lease_documents.{$field}")) {
+                    $file = $request->file("lease.lease_documents.{$field}");
+                    $fileName = time() . '_' . Str::slug($field) . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $filePath = $file->storeAs('uploads/lease_documents', $fileName, 'public');
+                    if (!$filePath) {
+                        throw new \Exception("Failed to store file for {$field}");
+                    }
+                    $documentPaths[$field] = $filePath;
+                } else {
+                    $documentPaths[$field] = null;
+                }
+            }
+
+            // Handle multiple file uploads for other_documents
+            if ($request->hasFile('lease.lease_documents.other_documents')) {
+                $otherDocumentPaths = [];
+                foreach ($request->file('lease.lease_documents.other_documents') as $index => $file) {
+                    $fileName = time() . '_other_document_' . $index . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $filePath = $file->storeAs('uploads/lease_documents', $fileName, 'public');
+                    if (!$filePath) {
+                        throw new \Exception("Failed to store file for other_documents[{$index}]");
+                    }
+                    $otherDocumentPaths[] = $filePath;
+                }
+                $documentPaths['other_documents'] = json_encode($otherDocumentPaths);
+            } else {
+                $documentPaths['other_documents'] = null;
+            }
+
+            $lease->leaseDocuments()->create($documentPaths);
         }
         if (isset($leaseData['lease_zekeez_automations'])) {
-            $lease->leaseZekeezAutomations()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_zekeez_automations']
-            );
+            $lease->leaseZekeezAutomations()->create($leaseData['lease_zekeez_automations']);
         }
         if (isset($leaseData['lease_end_details'])) {
-            $lease->leaseEndDetails()->updateOrCreate(
-                ['lease_id' => $lease->id],
-                $leaseData['lease_end_details']
-            );
+            $lease->leaseEndDetails()->create($leaseData['lease_end_details']);
         }
     }
 }

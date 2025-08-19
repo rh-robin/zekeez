@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
             $table->string('account_id')->unique();
-            $table->string('entity_id')->nullable(); // Link to your entities
             $table->text('access_token');
             $table->timestamp('token_expires_at');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

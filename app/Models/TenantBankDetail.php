@@ -7,23 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class TenantBankDetail extends Model
 {
     protected $fillable = [
-        'tenant_id',
-        'salutation',
-        'name',
-        'first_name',
-        'quality',
-        'date_of_birth',
-        'place_of_birth',
-        'address',
-        'additional_address',
-        'postal_code',
-        'city',
-        'country',
-        'phone',
-    ];
-
-    protected $casts = [
-        'date_of_birth' => 'date',
+        'tenant_id', 'bank_name', 'rib_iban', 'bic_swift', 'address', 'additional_address',
+        'postal_code', 'city', 'country'
     ];
 
     public function tenant()

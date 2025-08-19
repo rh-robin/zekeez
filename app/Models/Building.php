@@ -39,4 +39,10 @@ class Building extends Model
     {
         return $this->hasOne(BuildingFacility::class);
     }
+
+
+    public function leases()
+    {
+        return $this->morphToMany(Lease::class, 'property', 'lease_property');
+    }
 }

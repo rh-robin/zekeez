@@ -12,13 +12,12 @@ return new class extends Migration {
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lease_id')->nullable();
-            $table->enum('type', ['individual', 'legal_entity'])->nullable();
-            $table->unsignedBigInteger('property_id')->nullable();
             $table->unsignedBigInteger('entity_id')->nullable();
-            $table->string('property_type')->nullable();
+            $table->enum('type', ['individual', 'legal_entity'])->nullable();
+            $table->string('category')->nullable();
             $table->string('salutation')->nullable();
             $table->string('company_name')->nullable();
+            $table->string('legal_status')->nullable();
             $table->string('last_name')->nullable();
             $table->string('first_name')->nullable();
             $table->string('email')->nullable();
@@ -30,10 +29,10 @@ return new class extends Migration {
             $table->string('postal_code')->nullable();
             $table->string('city')->nullable();
             $table->string('country')->nullable();
-            $table->string('owner_siret_siren_number')->nullable();
-            $table->string('website')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+
+            $table->foreign('entity_id')->references('id')->on('entities')->onDelete('cascade');
         });
     }
 

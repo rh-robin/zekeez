@@ -8,8 +8,8 @@ class Account extends Model
 {
     protected $table = 'accounts';
     protected $fillable = [
+        'user_id',
         'account_id',
-        'entity_id',
         'access_token',
         'token_expires_at'
     ];
@@ -17,4 +17,14 @@ class Account extends Model
     protected $casts = [
         'token_expires_at' => 'datetime'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function entities()
+    {
+        return $this->belongsToMany(Entity::class, 'account_entity', 'account_id', 'entity_id');
+    }
 }

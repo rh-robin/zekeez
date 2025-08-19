@@ -11,17 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('contacts', function (Blueprint $table) {
+        Schema::create('contact_entity_representatives', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->json('entity_ids')->nullable();
-            $table->enum('type', ['individual', 'legal_entity']);
-            $table->string('category');
+            $table->unsignedBigInteger('contact_id');
             $table->string('salutation')->nullable();
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->string('company_name')->nullable();
-            $table->string('legal_status')->nullable();
+            $table->string('quality')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->string('address_line_1')->nullable();
@@ -31,10 +27,11 @@ return new class extends Migration
             $table->string('postal_code')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('place_of_birth')->nullable();
-            $table->text('additional_info')->nullable();
+            $table->string('siren')->nullable();
+            $table->string('website_url')->nullable();
             $table->timestamps();
 
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('contact_id')->references('id')->on('contacts')->onDelete('cascade');
         });
     }
 
@@ -43,6 +40,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('contacts');
+        Schema::dropIfExists('entity_representatives');
     }
 };

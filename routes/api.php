@@ -35,6 +35,7 @@ Route::middleware('auth:api')->group(function () {
         ->controller(EntityApiController::class)
         ->group(function () {
             Route::get('/get-all', 'getAllEntities');
+            Route::get('/get-all/dropdown', 'getAllEntitiesFroDropdown');
             Route::get('/get-all-accessible', 'getAccessibleEntities');
             Route::post('/store', 'storeEntity');
             Route::get('/edit/{id}', 'edit');
@@ -53,13 +54,14 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/legal-entities', 'getLegalEntityContacts');
         });
 
-    /*======= REVIEW =======*/
-    Route::post('/product/review', [ReviewApiController::class, 'postProductReview']);
-    Route::post('/shipping/review', [ReviewApiController::class, 'postShippingReview']);
-
-    /*======= RATING =======*/
-    Route::post('/product/rating', [ReviewApiController::class, 'postProductRating']);
-    Route::post('/shipping/rating', [ReviewApiController::class, 'postShippingRating']);
+    /*============ Bank account and transaction routes ==========*/
+    Route::prefix('account')
+        ->controller(BankAccountApiController::class)
+        ->group(function () {
+            Route::post('/create-requisition', 'createRequisition');
+            Route::post('/connect', 'connectAccount');
+            Route::get('/transactions/{accountId}', 'getTransactions');
+        });
 });
 
 Route::post('/send-otp', [OtpController::class, 'sendOtp']);
@@ -82,9 +84,44 @@ Route::get('/get-grains', [FilterApiController::class, 'getGrains']);
 Route::get('/get-filtered-products', [FilterApiController::class, 'getFilteredProducts']);
 
 
-Route::post('/create-requisition', [BankAccountApiController::class, 'createRequisition']);
-Route::post('/link-account', [BankAccountApiController::class, 'linkAccount']);
-Route::get('/transactions/{accountId}', [BankAccountApiController::class, 'getTransactions']);
+
+Route::post('/gemini-test', function (\Illuminate\Http\Request $request) {
+    $prompt = $request->input('prompt');
+
+    if (!$prompt) {
+        return response()->json(['error' => 'Prompt is required'], 400);
+    }
+
+    $apiKey = config('services.gemini.key');
+    $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+    $response = Http::withHeaders([
+        'x-goog-api-key' => $apiKey,
+        'Content-Type'   => 'application/json',
+    ])->post($endpoint, [
+        'contents' => [
+            [
+                'parts' => [
+                    ['text' => $prompt],
+                ],
+            ],
+        ],
+    ]);
+
+    if ($response->failed()) {
+        return response()->json([
+            'error' => 'Gemini API request failed',
+            'details' => $response->body(),
+        ], $response->status());
+    }
+
+    $text = $response->json('candidates.0.content.parts.0.text');
+
+    return response()->json(['response' => $text]);
+});
+
+
+
 
 
 require __DIR__.'/mamon.php';

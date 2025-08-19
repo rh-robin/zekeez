@@ -42,6 +42,12 @@ class Unit extends Model
         return $this->belongsTo(Building::class, 'building_id');
     }
 
+
+    public function leases()
+    {
+        return $this->morphToMany(Lease::class, 'property', 'lease_property');
+    }
+
     public function unitDestinationPremises()
     {
         return $this->hasOne(UnitDestinationPremise::class);

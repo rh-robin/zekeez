@@ -12,7 +12,7 @@ class LeaseFinancialRentCondition extends Model
         'rent_payment_due_date',
         'rent_payment_frequency',
         'preferred_rent_payment_method',
-        'other_accepted_payment_methods',
+        'other_accepted_payment_method',
     ];
 
     protected $casts = [

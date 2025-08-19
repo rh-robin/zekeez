@@ -7,27 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Tenant extends Model
 {
     protected $fillable = [
-        'lease_id',
-        'type',
-        'property_id',
-        'entity_id',
-        'property_type',
-        'salutation',
-        'company_name',
-        'last_name',
-        'first_name',
-        'email',
-        'phone',
-        'date_of_birth',
-        'place_of_birth',
-        'address',
-        'additional_address',
-        'postal_code',
-        'city',
-        'country',
-        'owner_siret_siren_number',
-        'website',
-        'notes',
+        'entity_id', 'type', 'category', 'salutation', 'company_name', 'legal_status',
+        'last_name', 'first_name', 'email', 'phone', 'date_of_birth', 'place_of_birth',
+        'address', 'additional_address', 'postal_code', 'city', 'country', 'notes'
     ];
 
     protected $casts = [
@@ -35,18 +17,14 @@ class Tenant extends Model
         'type' => 'string',
     ];
 
-    public function entities()
+    public function entity()
     {
-        return $this->hasMany(Entity::class);
-    }
-    public function lease()
-    {
-        return $this->belongsTo(Lease::class);
+        return $this->belongsTo(Entity::class);
     }
 
-    public function property()
+    public function leases()
     {
-        return $this->morphTo();
+        return $this->belongsToMany(Lease::class, 'lease_tenant');
     }
 
     public function representativeLegalEntities()

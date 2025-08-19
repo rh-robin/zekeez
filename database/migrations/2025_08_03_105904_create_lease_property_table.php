@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('requisitions', function (Blueprint $table) {
+        Schema::create('lease_property', function (Blueprint $table) {
             $table->id();
-            $table->json('entity_ids'); // Store array of entity IDs
-            $table->string('reference');
-            $table->string('requisition_id');
+            $table->unsignedBigInteger('lease_id');
+            $table->unsignedBigInteger('property_id');
+            $table->string('property_type'); // 'App\Models\Building' or 'App\Models\Unit'
             $table->timestamps();
+
+            $table->foreign('lease_id')->references('id')->on('leases')->onDelete('cascade');
         });
     }
 
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('requisitions');
+        Schema::dropIfExists('lease_property');
     }
 };

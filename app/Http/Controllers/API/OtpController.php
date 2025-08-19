@@ -74,7 +74,7 @@ class OtpController extends Controller
                 $message->to($request->email)
                     ->subject('Your OTP Code');
             });
-            return $this->sendResponse('', 'OTP sent successfully.', '', 200);
+            return $this->sendResponse('', 'OTP sent successfully.'. $otp, '', 200);
         }catch (\Exception $e) {
             return $this->sendError('Failed to send OTP', ['error' => $e->getMessage()], 500);
         }

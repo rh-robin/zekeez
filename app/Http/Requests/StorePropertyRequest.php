@@ -205,11 +205,11 @@ class StorePropertyRequest extends FormRequest
             'unit.unit_comfort_elements.specific_use_condition' => 'nullable|string',
 
             // Unit Details
-            'unit.unit_details.num_of_living_room' => 'required|integer|min:0',
-            'unit.unit_details.num_of_bedroom' => 'required|integer|min:0',
-            'unit.unit_details.num_of_bathroom' => 'required|integer|min:0',
-            'unit.unit_details.num_of_toilet' => 'required|integer|min:0',
-            'unit.unit_details.habitable_area' => 'required|string|max:255',
+            'unit.unit_details.num_of_living_room' => 'nullable|integer|min:0',
+            'unit.unit_details.num_of_bedroom' => 'nullable|integer|min:0',
+            'unit.unit_details.num_of_bathroom' => 'nullable|integer|min:0',
+            'unit.unit_details.num_of_toilet' => 'nullable|integer|min:0',
+            'unit.unit_details.habitable_area' => 'nullable|string|max:255',
             'unit.unit_details.commercial_area' => 'nullable|string|max:255',
             'unit.unit_details.sales_area' => 'nullable|string|max:255',
             'unit.unit_details.storage_area' => 'nullable|integer|min:0',

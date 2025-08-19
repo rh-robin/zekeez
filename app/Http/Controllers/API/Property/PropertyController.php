@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\API\Property;
 
 use App\Models\Building;
+use App\Models\Entity;
 use App\Models\Unit;
 use Exception;
 use App\Models\Property;
 use App\Trait\ResponseTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePropertyRequest;
@@ -174,7 +176,7 @@ class PropertyController extends Controller
 
 
 
-    public function getPropertiesByEntity($entityId)
+    public function getPropertiesByEntity(Request $request)
     {
         // Check if the user is authenticated via the 'api' guard
         if (!auth('api')->check()) {
@@ -183,28 +185,39 @@ class PropertyController extends Controller
 
         $user = auth('api')->user();
 
-        // Verify the entity belongs to the authenticated user
-        $entity = $user->entities()->where('id', $entityId)->first();
+        // Get entity IDs from query parameter as an array, default to empty array if not provided
+        $entityIds = $request->query('entityIds', []);
 
-        if (!$entity) {
-            return $this->sendError('Entity not found or not accessible by this user.', [], 404);
+        if (!is_array($entityIds) || empty($entityIds)) {
+            return $this->sendError('No entity IDs provided.', [], 400);
         }
 
-        // Fetch buildings for the specific entity
-        $buildings = $entity->buildings()
-            ->select('id as building_id', 'name as building_name', 'entity_id')
-            ->get()
-            ->map(function ($building) {
-                return [
-                    'property_name' => $building->building_name,
-                    'building_id' => $building->building_id,
-                    'unit_id' => null,
-                    'property_type' => 'building', // Added property_type for buildings
-                ];
-            });
+        // Validate that all entities belong to the authenticated user
+        $entities = Entity::where('user_id', $user->id)
+            ->whereIn('id', $entityIds)
+            ->get();
 
-        // Fetch units with their building names if building_id exists
-        $units = Unit::where('units.entity_id', $entityId) // Specify units.entity_id to resolve ambiguity
+        if ($entities->count() !== count($entityIds)) {
+            return $this->sendError('One or more entities not found or not accessible by this user.', [], 404);
+        }
+
+        // Fetch buildings for the specified entities
+        $buildings = $entities->flatMap(function ($entity) {
+            return $entity->buildings()
+                ->select('id as building_id', 'name as building_name', 'entity_id')
+                ->get()
+                ->map(function ($building) {
+                    return [
+                        'property_name' => $building->building_name,
+                        'building_id' => $building->building_id,
+                        'unit_id' => null,
+                        'property_type' => 'building',
+                    ];
+                });
+        });
+
+        // Fetch units for the specified entities with their building names if building_id exists
+        $units = Unit::whereIn('units.entity_id', $entityIds) // Qualified entity_id with units table
         ->leftJoin('buildings', 'units.building_id', '=', 'buildings.id')
             ->select(
                 'units.id as unit_id',
@@ -222,7 +235,7 @@ class PropertyController extends Controller
                     'property_name' => $propertyName,
                     'building_id' => $unit->building_id,
                     'unit_id' => $unit->unit_id,
-                    'property_type' => 'unit', // Added property_type for units
+                    'property_type' => 'unit',
                 ];
             });
 
@@ -230,7 +243,7 @@ class PropertyController extends Controller
         $properties = $buildings->merge($units);
 
         if ($properties->isEmpty()) {
-            return $this->sendResponse([], 'No properties found for this entity.', null, 200);
+            return $this->sendResponse([], 'No properties found for the specified entities.', null, 200);
         }
 
         return $this->sendResponse($properties, 'Properties retrieved successfully.', null, 200);

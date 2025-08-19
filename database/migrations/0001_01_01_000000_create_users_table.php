@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('salutation')->nullable();
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->string('company_name')->nullable();
-            $table->string('legal_status')->nullable();
             $table->string('email')->unique();
             $table->string('phone')->nullable();
             $table->string('image')->nullable();

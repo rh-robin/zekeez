@@ -14,20 +14,16 @@ return new class extends Migration
         Schema::create('tenant_bank_details', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tenant_id')->nullable();
-            $table->string('salutation')->nullable();
-            $table->string('name')->nullable();
-            $table->string('first_name')->nullable();
-            $table->string('quality')->nullable();
-            $table->string('date_of_birth')->nullable();
-            $table->string('place_of_birth')->nullable();
+            $table->string('bank_name')->nullable();
+            $table->string('rib_iban')->nullable();
+            $table->string('bic_swift')->nullable();
             $table->text('address')->nullable();
             $table->text('additional_address')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('city')->nullable();
             $table->string('country')->nullable();
-            $table->string('phone')->nullable();
             $table->timestamps();
-            
+
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
     }

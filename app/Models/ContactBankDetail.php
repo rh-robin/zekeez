@@ -4,27 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class EntityRepresentative extends Model
+class ContactBankDetail extends Model
 {
-    protected $table = 'entity_representatives';
+    protected $table = 'contact_bank_details';
 
     protected $fillable = [
         'contact_id',
-        'first_name',
-        'last_name',
-        'email',
-        'phone',
-        'date_of_birth',
-        'place_of_birth',
+        'name',
+        'rib_iban',
+        'bic_swift',
         'address_line_1',
         'address_line_2',
         'country',
         'city',
         'postal_code',
-        'siren',
-        'website_url',
     ];
-
 
     public function contact()
     {

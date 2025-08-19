@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\BankDetail;
+use App\Http\Requests\StoreContactRequest;
+use App\Models\ContactBankDetail;
 use App\Models\Contact;
 use App\Models\EntityAccess;
-use App\Models\EntityRepresentative;
+use App\Models\ContactEntityRepresentative;
 use App\Models\Property;
 use App\Models\User;
 use App\Trait\ResponseTrait;
@@ -19,189 +20,109 @@ use Illuminate\Support\Facades\Validator;
 class ContactApiController extends Controller
 {
     use ResponseTrait;
-    public function store(Request $request)
+    public function store(StoreContactRequest $request)
     {
-        // Check if the user is authenticated via the 'api' guard
-        if (!auth('api')->check()) {
-            return $this->sendError('Please login first', [], 422);
-        }
-        $authenticatedUser = auth('api')->user();
+        $user = auth('api')->user();
+        $validated = $request->validated();
 
-        $rules = [
-            'type' => 'required|in:individual,legal_entity',
-            'category' => 'required|string',
-            'salutation' => 'required_if:type,individual|string',
-            'first_name' => 'required_if:type,individual|string',
-            'last_name' => 'required_if:type,individual|string',
-            'email' => 'required|email',
-            'phone' => 'required|string|regex:/^\+?[0-9]\d{1,14}$/',
-            'date_of_birth' => 'nullable|date_format:Y-m-d',
-            'place_of_birth' => 'nullable|string',
-            'address_line_1' => 'nullable|string',
-            'address_line_2' => 'nullable|string',
-            'country' => 'nullable|string',
-            'city' => 'nullable|string',
-            'postal_code' => 'nullable|string',
-            'additional_info' => 'nullable|string',
-            'entity_id' => 'nullable|exists:entities,id',
-            'building_id' => 'nullable|exists:buildings,id',
-
-            // for type legal_entity
-            'legal_status' => 'required_if:type,legal_entity|string',
-            'company_name' => 'required_if:type,legal_entity|string',
-
-            //for bank
-            'bank_name' => 'nullable|string',
-            'rib_iban' => 'nullable|string',
-            'bic_swift' => 'nullable|string',
-            'bank_address_line_1' => 'nullable|string',
-            'bank_address_line_2' => 'nullable|string',
-            'bank_country' => 'nullable|string',
-            'bank_city' => 'nullable|string',
-            'bank_postal_code' => 'nullable|string',
-
-            //for representative
-            'r_salutation' => 'nullable|string',
-            'r_first_name' => 'nullable|string',
-            'r_last_name' => 'nullable|string',
-            'quality' => 'nullable|string',
-            'r_email' => 'required_if:type,legal_entity|email',
-            'r_phone' => 'nullable|string|regex:/^\+?[0-9]\d{1,14}$/',
-            'r_date_of_birth' => 'nullable|date|date_format:Y-m-d',
-            'r_place_of_birth' => 'nullable|string',
-            'r_address_line_1' => 'nullable|string',
-            'r_address_line_2' => 'nullable|string',
-            'r_country' => 'nullable|string',
-            'r_city' => 'nullable|string',
-            'r_postal_code' => 'nullable|string',
-            'siren' => 'nullable|string',
-            'website_url' => 'nullable|string|url',
-        ];
-
-
-
-        $messages = [
-
-        ];
-
-        // Validate the incoming request
-        $validator = Validator::make($request->all(), $rules, $messages);
-
-        if ($validator->fails()) {
-            return $this->sendError('Validation failed', $validator->errors()->toArray(), 422);
-        }
-
-        $dob = null;
-        if(!empty($request->date_of_birth))
-        {
-            $dob = $request->date_of_birth;
-        }
-
-
-
-        try{
+        try {
             DB::beginTransaction();
 
-            // save contact as a user
-            $user = User::create([
-                // For individual
-                'salutation'    => $request->type === 'individual' ? $request->salutation : null,
-                'first_name'    => $request->type === 'individual' ? $request->first_name : null,
-                'last_name'     => $request->type === 'individual' ? $request->last_name : null,
-
-                // For legal entity
-                'company_name'  => $request->type === 'legal_entity' ? $request->company_name : null,
-                'legal_status'  => $request->type === 'legal_entity' ? $request->legal_status : null,
-
-                //common for both
-                'email' => $request->email,
-                'password' => Hash::make('12345678'),
-                'phone' => $request->phone,
-                'date_of_birth' => $dob,
-                'place_of_birth' => $request->place_of_birth,
-                'address_line_1' => $request->address_line_1,
-                'address_line_2' => $request->address_line_2,
-                'country' => $request->country,
-                'city' => $request->city,
-                'postal_code' => $request->postal_code,
-                'is_verified' => true,
-            ]);
-
-            // save data to contacts table
+            // Save contact data
             $contact = Contact::create([
                 'user_id' => $user->id,
-                'created_by_id' => $authenticatedUser->id,
-                'type' => $request->type,
-                'category' => $request->category,
-                'additional_info' => $request->additional_info,
+                'entity_ids' => $validated['entity_ids'] ? json_encode($validated['entity_ids']) : null,
+                'type' => $validated['type'],
+                'category' => $validated['category'],
+                'salutation' => $validated['salutation'] ?? null,
+                'first_name' => $validated['first_name'] ?? null,
+                'last_name' => $validated['last_name'] ?? null,
+                'company_name' => $validated['company_name'] ?? null,
+                'legal_status' => $validated['legal_status'] ?? null,
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'address_line_1' => $validated['address_line_1'] ?? null,
+                'address_line_2' => $validated['address_line_2'] ?? null,
+                'country' => $validated['country'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'postal_code' => $validated['postal_code'] ?? null,
+                'date_of_birth' => $validated['date_of_birth'] ?? null,
+                'place_of_birth' => $validated['place_of_birth'] ?? null,
+                'additional_info' => $validated['additional_info'] ?? null,
             ]);
 
-            // save bank details
-            $bankDetails = BankDetail::create([
-                'user_id' => $user->id,
-                'name' => $request->bank_name,
-                'rib_iban' => $request->rib_iban,
-                'bic_swift' => $request->bic_swift,
-                'address_line_1' => $request->bank_address_line_1,
-                'address_line_2' => $request->bank_address_line_2,
-                'country' => $request->bank_country,
-                'city' => $request->bank_city,
-                'postal_code' => $request->bank_postal_code,
-            ]);
-
-            // save entity representative data
-            if(!empty($request->r_date_of_birth))
-            {
-                $dob = $request->r_date_of_birth;
-            }
-            $representative = null;
-            if($request->type === 'legal_entity')
-            {
-                $representative = EntityRepresentative::create([
+            // Save bank details
+            if ($validated['bank_name'] || $validated['rib_iban'] || $validated['bic_swift']) {
+                ContactBankDetail::create([
                     'contact_id' => $contact->id,
-                    'salutation' => $request->r_salutation,
-                    'first_name' => $request->r_first_name,
-                    'last_name' => $request->r_last_name,
-                    'email' => $request->r_email,
-                    'phone' => $request->r_phone,
-                    'date_of_birth' => $dob,
-                    'place_of_birth' => $request->r_place_of_birth,
-                    'address_line_1' => $request->r_address_line_1,
-                    'address_line_2' => $request->r_address_line_2,
-                    'country' => $request->r_country,
-                    'city' => $request->r_city,
-                    'postal_code' => $request->r_postal_code,
-                    'siren' => $request->siren,
-                    'website_url' => $request->website_url,
+                    'name' => $validated['bank_name'] ?? null,
+                    'rib_iban' => $validated['rib_iban'] ?? null,
+                    'bic_swift' => $validated['bic_swift'] ?? null,
+                    'address_line_1' => $validated['bank_address_line_1'] ?? null,
+                    'address_line_2' => $validated['bank_address_line_2'] ?? null,
+                    'country' => $validated['bank_country'] ?? null,
+                    'city' => $validated['bank_city'] ?? null,
+                    'postal_code' => $validated['bank_postal_code'] ?? null,
                 ]);
             }
 
-            // assign contact to entity
-            $entityAccess = null;
-            if($request->entity_id)
-            {
-                $entityAccess = EntityAccess::create([
-                    'entity_id' => $request->entity_id,
-                    'user_id' => $user->id,
+            // Save entity representative data
+            if ($validated['type'] === 'legal_entity' && $validated['r_email']) {
+                ContactEntityRepresentative::create([
+                    'contact_id' => $contact->id,
+                    'salutation' => $validated['r_salutation'] ?? null,
+                    'first_name' => $validated['r_first_name'] ?? null,
+                    'last_name' => $validated['r_last_name'] ?? null,
+                    'quality' => $validated['r_quality'] ?? null,
+                    'email' => $validated['r_email'] ?? null,
+                    'phone' => $validated['r_phone'] ?? null,
+                    'date_of_birth' => $validated['r_date_of_birth'] ?? null,
+                    'place_of_birth' => $validated['r_place_of_birth'] ?? null,
+                    'address_line_1' => $validated['r_address_line_1'] ?? null,
+                    'address_line_2' => $validated['r_address_line_2'] ?? null,
+                    'country' => $validated['r_country'] ?? null,
+                    'city' => $validated['r_city'] ?? null,
+                    'postal_code' => $validated['r_postal_code'] ?? null,
+                    'siren' => $validated['siren'] ?? null,
+                    'website_url' => $validated['website_url'] ?? null,
                 ]);
             }
+
+            // Save contact-property relationships
+            if (!empty($validated['property_ids'])) {
+                foreach ($validated['property_ids'] as $property) {
+                    // Validate property ID existence based on type
+                    if ($property['type'] === 'App\Models\Building') {
+                        if (!\App\Models\Building::where('id', $property['id'])->exists()) {
+                            throw new \Exception("Building ID {$property['id']} does not exist.");
+                        }
+                    } elseif ($property['type'] === 'App\Models\Unit') {
+                        if (!\App\Models\Unit::where('id', $property['id'])->exists()) {
+                            throw new \Exception("Unit ID {$property['id']} does not exist.");
+                        }
+                    }
+
+                    DB::table('contact_property')->insert([
+                        'contact_id' => $contact->id,
+                        'property_id' => $property['id'],
+                        'property_type' => $property['type'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
             DB::commit();
-            // Prepare success response
+
             $success = [
-                'user_id' => $user->id,
                 'contact_id' => $contact->id,
-                'bank_id' => $bankDetails->id,
-                'representative_id' => $representative?->id,
             ];
 
-            // Evaluate the message based on the $isNewUser condition
-            $message = 'Contact saved successfully';
-            return $this->sendResponse($success, $message);
-        }catch (\Exception $e){
+            return $this->sendResponse($success, 'Contact saved successfully');
+        } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError('Something went wrong', ['error' => $e->getMessage()], 500);
         }
-
     } // end store
 
 
@@ -216,14 +137,13 @@ class ContactApiController extends Controller
         $user = auth('api')->user();
 
         // Fetch contacts of type 'individual' created by the authenticated user
-        $contacts = Contact::with(['user:id,first_name,last_name']) // eager load only required fields
-        ->where('created_by_id', $user->id)
+        $contacts = Contact::where('user_id', $user->id)
             ->where('type', 'individual')
             ->get()
             ->map(function ($contact) {
                 return [
-                    'id' => $contact->user->id,
-                    'name' => $contact->user->first_name . ' ' . $contact->user->last_name,
+                    'id' => $contact->id,
+                    'name' => $contact->first_name . ' ' . $contact->last_name,
                 ];
             });
 
@@ -242,14 +162,13 @@ class ContactApiController extends Controller
         $user = auth('api')->user();
 
         // Fetch contacts of type 'individual' created by the authenticated user
-        $contacts = Contact::with(['user:id,company_name']) // eager load only required fields
-        ->where('created_by_id', $user->id)
+        $contacts = Contact::where('user_id', $user->id)
             ->where('type', 'legal_entity')
             ->get()
             ->map(function ($contact) {
                 return [
-                    'id' => $contact->user->id,
-                    'name' => $contact->user->company_name,
+                    'id' => $contact->id,
+                    'name' => $contact->company_name,
                 ];
             });
 
@@ -293,12 +212,8 @@ class ContactApiController extends Controller
         // Get all contacts created by this user
         $contacts = $user->contactsCreated()
             ->with([
-                'user.bankDetail',
+                'bankDetails',
                 'representative',
-                // Load entities where this contact's user is assigned
-                'user.entityAccesses.entity' => function ($query) use ($ownedEntityIds) {
-                    $query->whereIn('id', $ownedEntityIds);
-                }
             ])
             ->get();
 

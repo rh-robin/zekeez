@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('tenant_id')->nullable();
             $table->string('salutation')->nullable();
-            $table->string('name')->nullable();
             $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
             $table->string('quality')->nullable();
             $table->string('date_of_birth')->nullable();
             $table->string('place_of_birth')->nullable();
@@ -25,9 +25,12 @@ return new class extends Migration
             $table->string('postal_code')->nullable();
             $table->string('city')->nullable();
             $table->string('country')->nullable();
+            $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->string('siret_siren_number')->nullable();
+            $table->string('website')->nullable();
             $table->timestamps();
-            
+
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
     }

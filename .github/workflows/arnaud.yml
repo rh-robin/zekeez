@@ -18,6 +18,6 @@ jobs:
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ftp.softvencefsd.xyz
-          username:  arnaudzekeez@arnaudzekeez.softvencefsd.xyz
-          password:  "S%ZFSboFJihD"
+          server: 168.231.85.164
+          username:  ${{ secrets.FTP_USERNAME_CLIENT }}
+          password:  ${{ secrets.FTP_PASSWORD_CLIENT }}

@@ -14,20 +14,7 @@ class Entity extends Model
     ];
 
 
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
 
-    public function assignedUsers()
-    {
-        return $this->belongsToMany(User::class, 'entity_accesses');
-    }
-
-    public function entityAccesses()
-    {
-        return $this->hasMany(EntityAccess::class);
-    }
 
     public function buildings()
     {
@@ -37,6 +24,21 @@ class Entity extends Model
     public function units()
     {
         return $this->hasMany(Unit::class, 'entity_id');
+    }
+
+    public function tenants()
+    {
+        return $this->hasMany(Tenant::class, 'entity_id');
+    }
+
+    public function leases()
+    {
+        return $this->hasMany(Lease::class, 'entity_id');
+    }
+
+    public function accounts()
+    {
+        return $this->hasMany(Account::class, 'entity_id');
     }
 
 }

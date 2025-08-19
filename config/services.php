@@ -47,4 +47,11 @@ return [
         'redirect' => env('APPLE_REDIRECT_URI'),
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'project_id' => env('GEMINI_PROJECT_ID'),
+        'location' => env('GEMINI_LOCATION', 'us-central1'),
+        'model_id' => env('GEMINI_MODEL_ID'),
+    ],
+
 ];

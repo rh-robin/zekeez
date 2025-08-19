@@ -22,9 +22,9 @@ return new class extends Migration
             $table->string('co_ownership_regulations_annex')->nullable();
             $table->string('landlord_bank_details_annex')->nullable();
             $table->string('student_mobility_lease_justification_annex')->nullable();
-            $table->string('other_documents')->nullable();
+            $table->json('other_documents')->nullable(); //will store multiple file paths
             $table->timestamps();
-            
+
             $table->foreign('lease_id')->references('id')->on('leases')->onDelete('cascade');
         });
     }

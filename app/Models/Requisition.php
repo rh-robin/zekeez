@@ -8,8 +8,12 @@ class Requisition extends Model
 {
     protected $table = 'requisitions';
     protected $fillable = [
-        'entity_id',
+        'entity_ids',
         'reference',
         'requisition_id'
+    ];
+
+    protected $casts = [
+        'entity_ids' => 'array',
     ];
 }

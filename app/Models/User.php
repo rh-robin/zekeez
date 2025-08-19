@@ -79,7 +79,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function bankDetail()
     {
-        return $this->hasOne(BankDetail::class);
+        return $this->hasOne(ContactBankDetail::class);
     }
 
     public function entities()
@@ -103,7 +103,7 @@ class User extends Authenticatable implements JWTSubject
     public function contactsCreated()
     {
         // contacts created by this user (using created_by_id)
-        return $this->hasMany(Contact::class, 'created_by_id');
+        return $this->hasMany(Contact::class, 'user_id');
     }
 
     // Add the required JWT methods
@@ -115,5 +115,10 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function accounts()
+    {
+        return $this->hasMany(Account::class, 'user_id');
     }
 }

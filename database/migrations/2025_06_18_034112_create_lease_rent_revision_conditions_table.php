@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('lease_rent_revision_conditions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('lease_id')->nullable();
-            
+
             // Rent Revision Clause Details
             $table->string('frequency_of_rent_revision')->nullable();
             $table->date('date_of_last_rent_revision')->nullable();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('other_index_to_specify')->nullable();
             $table->string('index_reference_quarter')->nullable();
             $table->string('index_reference_year')->nullable();
-            $table->decimal('reference_index_value', 10, 2)->nullable();
+            $table->string('reference_index_value')->nullable();
             $table->text('revision_formula')->nullable();
             $table->timestamps();
 
