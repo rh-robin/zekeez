@@ -32,6 +32,7 @@ return new class extends Migration
             $table->foreignId('lease_id')->nullable()->constrained('leases')->onDelete('set null');
             $table->foreignId('tenant_id')->nullable()->constrained('tenants')->onDelete('set null');
             $table->foreignId('category_id')->nullable()->constrained('transaction_categories')->onDelete('set null');
+            $table->string('confidence')->nullable();
             $table->enum('status', ['to_categorize', 'to_validate', 'validated', 'archived'])->default('to_categorize');
             $table->timestamps();
         });

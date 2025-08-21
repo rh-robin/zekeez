@@ -10,7 +10,7 @@ class Transaction extends Model
         'account_id', 'transaction_id', 'entry_reference', 'booking_date', 'value_date',
         'amount', 'currency', 'creditor_name', 'debtor_name', 'remittance_information',
         'bank_transaction_code', 'proprietary_bank_transaction_code', 'internal_transaction_id',
-        'entity_id', 'building_id', 'unit_id', 'lease_id', 'tenant_id', 'category_id', 'status'
+        'entity_id', 'building_id', 'unit_id', 'lease_id', 'tenant_id', 'category_id', 'confidence', 'status'
     ];
 
     protected $casts = [

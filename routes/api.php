@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\API\BankAccountApiController;
+use App\Http\Controllers\API\TransactionApiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\OtpController;
 use App\Http\Controllers\API\AuthController;
@@ -60,7 +61,13 @@ Route::middleware('auth:api')->group(function () {
         ->group(function () {
             Route::post('/create-requisition', 'createRequisition');
             Route::post('/connect', 'connectAccount');
-            Route::get('/transactions/{accountId}', 'getTransactions');
+        });
+
+    /*============ Bank account and transaction routes ==========*/
+    Route::prefix('transaction')
+        ->controller(TransactionApiController::class)
+        ->group(function () {
+            Route::get('/account/{accountId}', 'getTransactions');
         });
 });
 
